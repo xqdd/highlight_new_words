@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="JsonSchemaMappingsProjectConfiguration">
+    <state>
+      <map>
+        <entry key="chrome-manifest">
+          <value>
+            <SchemaInfo>
+              <option name="name" value="chrome-manifest" />
+              <option name="relativePathToSchema" value="chrome-manifest.json" />
+              <option name="patterns">
+                <list>
+                  <Item>
+                    <option name="path" value="manifest.json" />
+                    <option name="pattern" value="true" />
+                  </Item>
+                </list>
+              </option>
+            </SchemaInfo>
+          </value>
+        </entry>
+      </map>
+    </state>
+  </component>
+</project>

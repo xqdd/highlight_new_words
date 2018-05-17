@@ -1,0 +1,27 @@
+{
+  "manifest_version": 2,
+  "name": "highlight_new_words",
+  "version": "1.0",
+  "description": "highlight the youdao direct new words",
+  "browser_action": {
+    "default_popup": "popup/popup.html"
+  },
+  "content_scripts": [
+    {
+      "all_frames": true,
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content_scripts/jquery-3.3.1.js",
+        "content_scripts/highlight.js"
+      ],
+      "css": [
+        "content_scripts/content_scripts.css"
+      ]
+    }
+  ],
+  "permissions": [
+    "storage"
+  ]
+}
