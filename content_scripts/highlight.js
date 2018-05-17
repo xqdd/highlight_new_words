@@ -1,12 +1,148 @@
+//生词列表
 var newWords;
-chrome.storage.local.get("newWords", function (result) {
-    //获取所有文本节点
-    newWords = result.newWords.wordList;
-    highlight(textNodesUnder(document.body))
-    //插入节点时修改
-    document.addEventListener("DOMNodeInserted", onNodeInserted, false);
+//当前节点
+var currNode;
+//鼠标节点（实时）
+var mouseNode
+//是否允许隐藏气泡
+var isAllowHideBubble = true
+//气泡显示/隐藏延迟时间(ms)
+var delayed = 100
+
+$(function () {
+    init()
 })
 
+
+/**
+ * 初始化
+ */
+function init() {
+    //从localstorege获取生词列表，高亮所有匹配的节点
+    chrome.storage.local.get("newWords", function (result) {
+        var before = new Date().getTime()
+        newWords = result.newWords.wordList;
+        highlight(textNodesUnder(document.body))
+        console.log("解析耗时：" + (new Date().getTime() - before) + " ms")
+
+        //在插入节点时修改
+        document.addEventListener("DOMNodeInserted", onNodeInserted, false);
+    })
+
+
+    //创建鼠标悬浮气泡
+    createBubble();
+}
+
+/**
+ * 创建鼠标悬浮气泡
+ */
+function createBubble() {
+    //创建添加到body中
+    var div = $("<div>").attr("class", "xqdd_bubble")
+    var word = $("<span>").attr("class", "xqdd_bubble_word")
+    var trans = $("<span>").attr("class", "xqdd_bubble_trans")
+    div.append(word).append(trans)
+    $(document.body).append(div)
+
+    //添加鼠标进入离开事件
+    div.on("mouseleave", function (e) {
+        hideBubbleDelayed()
+    })
+    div.on("mouseenter", function (e) {
+        isAllowHideBubble = false
+    })
+
+    //监听鼠标位置
+    document.addEventListener("mousemove", handleMouseMove, false)
+    // document.addEventListener("mousedown", hideBubble(), false)
+
+    //监听窗口滚动
+    window.addEventListener("scroll", function () {
+        isAllowHideBubble = true
+        hideBubble()
+    })
+}
+
+/**
+ * 显示气泡
+ */
+function showBubble() {
+    if (!!currNode) {
+        chrome.storage.local.get("newWords", function (result) {
+            var bubble = $(".xqdd_bubble")
+            var nodeRect = currNode.getBoundingClientRect();
+            var word = $(currNode).text()
+            var wordInfo = result.newWords.wordInfos[word.toLowerCase()]
+            $(".xqdd_bubble_word").text(word + "  " + wordInfo["phonetic"])
+            $(".xqdd_bubble_trans").text(wordInfo["trans"])
+
+            bubble
+                .css("top", nodeRect.bottom + 'px')
+                .css("left", Math.max(5, Math.floor((nodeRect.left + nodeRect.right) / 2) - 100) + 'px')
+                .css("display", 'flex')
+        })
+
+
+    }
+}
+
+/**
+ * 处理鼠标移动
+ * @param e
+ */
+function handleMouseMove(e) {
+    //获取鼠标所在节点
+    mouseNode = document.elementFromPoint(e.clientX, e.clientY);
+    if (!mouseNode) {
+        hideBubbleDelayed()
+        return
+    }
+    var classAttr = "";
+    try {
+        classAttr = mouseNode.getAttribute("class");
+    } catch (exc) {
+        hideBubbleDelayed()
+        return
+    }
+    if (!classAttr || !classAttr.startsWith("xqdd_")) {
+        hideBubbleDelayed()
+        return
+    }
+    isAllowHideBubble = false
+    currNode = mouseNode
+    //延迟显示（防止鼠标一闪而过的情况）
+    setTimeout(function () {
+        //是本节点
+        if (currNode == mouseNode) {
+            showBubble();
+        }
+        //非本节点
+        else if ($(mouseNode).attr("class") && !$(mouseNode).attr("class").startsWith("xqdd_")) {
+            isAllowHideBubble = true
+        }
+    }, delayed)
+}
+
+/**
+ * 延迟隐藏气泡
+ */
+function hideBubbleDelayed() {
+    isAllowHideBubble = true
+    setTimeout(function () {
+        hideBubble();
+    }, delayed);
+}
+
+
+/**
+ * 隐藏气泡
+ */
+function hideBubble() {
+    if (isAllowHideBubble) {
+        $(".xqdd_bubble").css("display", "none")
+    }
+}
 
 /**
  *
@@ -14,7 +150,6 @@ chrome.storage.local.get("newWords", function (result) {
  *
  */
 function highlight(nodes) {
-    var before = new Date().getTime()
     for (var i = 0; i < nodes.length; i++) {
         var node = nodes[i]
         var text = node.textContent
@@ -28,13 +163,16 @@ function highlight(nodes) {
         if (newNodeChildrens == null || !newNodeChildrens || newNodeChildrens.length == 0) {
             continue;
         }
+        //处理a标签显示异常
+        if (parent_node.tagName.toLowerCase() == "a") {
+            $(parent_node).css("display", "inline");
+        }
         for (var j = 0; j < newNodeChildrens.length; j++) {
             parent_node.insertBefore(newNodeChildrens[j], nodes[i]);
         }
         parent_node.removeChild(nodes[i]);
     }
 
-    console.log("解析耗时：" + (new Date().getTime() - before))
 }
 
 /**
@@ -42,7 +180,7 @@ function highlight(nodes) {
  * @param text
  */
 function highlightNode(texts) {
-    //解析待检测单词列表
+    //将句子解析成待检测单词列表
     var words = [];
     var tempTexts = texts
     while (tempTexts.length > 0) {
@@ -59,9 +197,11 @@ function highlightNode(texts) {
 
     if (words.length >= 1) {
         //处理后结果
-        var newNodeChildrens = [];
+        var newNodeChildrens = []
         //剩下未处理的字符串
         var remainTexts = texts
+        //已处理部分字符串
+        var checkedText = ""
         for (var i = 0; i < words.length; i++) {
             var word = words[i]
             //当前所处位置
@@ -69,6 +209,9 @@ function highlightNode(texts) {
             //匹配单词
             if (newWords.indexOf(word.toLowerCase()) !== -1) {
                 //匹配成功
+                //添加已处理部分到节点
+                newNodeChildrens.push(document.createTextNode(checkedText))
+                checkedText = ""
                 if (pos2 == 0) {
                     // wordxx类型
                     newNodeChildrens.push(hightlightText(word))
@@ -78,14 +221,19 @@ function highlightNode(texts) {
                     newNodeChildrens.push(hightlightText(word))
                 }
             } else {
-                //匹配不上，处理前面部分
-                newNodeChildrens.push(document.createTextNode(remainTexts.slice(0, pos2 + word.length)))
+                //匹配失败，追加到已处理字符串
+                checkedText += remainTexts.slice(0, pos2 + word.length)
             }
-            //处理末尾
+            //删除已处理的字符(到当前单词的位置)
             remainTexts = remainTexts.slice(pos2 + word.length)
         }
-        //处理末尾
-        newNodeChildrens.push(document.createTextNode(remainTexts))
+        //处理最末尾
+        if (newNodeChildrens.length != 0) {
+            if (checkedText != "") {
+                newNodeChildrens.push(document.createTextNode(checkedText))
+            }
+            newNodeChildrens.push(document.createTextNode(remainTexts))
+        }
     }
     return newNodeChildrens
 }

@@ -1,3 +1,18 @@
 .xqdd_highlight_new_word {
-    background: yellow;
+    background: rgba(255, 255, 0, 0.5);
+}
+
+.xqdd_bubble {
+    flex-direction: column;
+    width: 200px;
+    align-items: center;
+    position: fixed;
+    background-color: bisque;
+    display: none;
+    z-index: 1000000;
+}
+
+.xqdd_bubble_word .xqdd_bubble_trans {
+    width: auto;
+    height: auto;
 }
