@@ -29,9 +29,15 @@ function init() {
         document.addEventListener("DOMNodeInserted", onNodeInserted, false);
     })
 
-
     //创建鼠标悬浮气泡
     createBubble();
+
+    //监听xml导入成功消息
+    chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+        if (request.type == "importSuccess") {
+            alert("导入生词本成功")
+        }
+    })
 }
 
 /**
@@ -71,16 +77,19 @@ function showBubble() {
     if (!!currNode) {
         chrome.storage.local.get("newWords", function (result) {
             var bubble = $(".xqdd_bubble")
-            var nodeRect = currNode.getBoundingClientRect();
-            var word = $(currNode).text()
-            var wordInfo = result.newWords.wordInfos[word.toLowerCase()]
-            $(".xqdd_bubble_word").text(word + "  " + wordInfo["phonetic"])
-            $(".xqdd_bubble_trans").text(wordInfo["trans"])
+            if (bubble.css("display") != "flex") {
+                var nodeRect = currNode.getBoundingClientRect();
+                var word = $(currNode).text()
+                var wordInfo = result.newWords.wordInfos[word.toLowerCase()]
+                $(".xqdd_bubble_word").text(word + "  " + wordInfo["phonetic"])
+                $(".xqdd_bubble_trans").text(wordInfo["trans"])
+                bubble
+                    .css("top", nodeRect.bottom + 'px')
+                    .css("left", Math.max(5, Math.floor((nodeRect.left + nodeRect.right) / 2) - 100) + 'px')
+                    .css("display", 'flex')
 
-            bubble
-                .css("top", nodeRect.bottom + 'px')
-                .css("left", Math.max(5, Math.floor((nodeRect.left + nodeRect.right) / 2) - 100) + 'px')
-                .css("display", 'flex')
+                chrome.runtime.sendMessage({type: "tts", word})
+            }
         })
 
 
@@ -165,7 +174,7 @@ function highlight(nodes) {
         }
         //处理a标签显示异常
         if (parent_node.tagName.toLowerCase() == "a") {
-            $(parent_node).css("display", "inline");
+            $(parent_node).css("display", "inline-block");
         }
         for (var j = 0; j < newNodeChildrens.length; j++) {
             parent_node.insertBefore(newNodeChildrens[j], nodes[i]);

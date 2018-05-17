@@ -3,6 +3,11 @@
   "name": "highlight_new_words",
   "version": "1.0",
   "description": "highlight the youdao direct new words",
+  "background": {
+    "scripts": [
+      "background/background.js"
+    ]
+  },
   "browser_action": {
     "default_popup": "popup/popup.html"
   },
@@ -23,6 +28,7 @@
   ],
   "permissions": [
     "storage",
+    "tts",
     "notifications"
   ]
 }
