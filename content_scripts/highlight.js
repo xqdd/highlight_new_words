@@ -1,13 +1,16 @@
-//生词列表
+//生词本
 var newWords;
-//当前节点
-var currNode;
+//当前要显示的节点
+var currNode
 //鼠标节点（实时）
 var mouseNode
+//已经显示了的节点
+var showedNode
 //是否允许隐藏气泡
 var isAllowHideBubble = true
 //气泡显示/隐藏延迟时间(ms)
 var delayed = 100
+//生词信息列表
 
 $(function () {
     init()
@@ -21,9 +24,9 @@ function init() {
     //从localstorege获取生词列表，高亮所有匹配的节点
     chrome.storage.local.get("newWords", function (result) {
         var before = new Date().getTime()
-        newWords = result.newWords.wordList;
+        newWords = result.newWords;
         highlight(textNodesUnder(document.body))
-        console.log("解析耗时：" + (new Date().getTime() - before) + " ms")
+        console.log("解析总耗时：" + (new Date().getTime() - before) + " ms")
 
         //在插入节点时修改
         document.addEventListener("DOMNodeInserted", onNodeInserted, false);
@@ -75,24 +78,21 @@ function createBubble() {
  */
 function showBubble() {
     if (!!currNode) {
-        chrome.storage.local.get("newWords", function (result) {
-            var bubble = $(".xqdd_bubble")
-            if (bubble.css("display") != "flex") {
-                var nodeRect = currNode.getBoundingClientRect();
-                var word = $(currNode).text()
-                var wordInfo = result.newWords.wordInfos[word.toLowerCase()]
-                $(".xqdd_bubble_word").text(word + "  " + wordInfo["phonetic"])
-                $(".xqdd_bubble_trans").text(wordInfo["trans"])
-                bubble
-                    .css("top", nodeRect.bottom + 'px')
-                    .css("left", Math.max(5, Math.floor((nodeRect.left + nodeRect.right) / 2) - 100) + 'px')
-                    .css("display", 'flex')
+        var bubble = $(".xqdd_bubble")
+        if (showedNode != currNode || bubble.css("display") != "flex") {
+            var nodeRect = currNode.getBoundingClientRect();
+            var word = $(currNode).text()
+            var wordInfo = newWords.wordInfos[word.toLowerCase()]
+            $(".xqdd_bubble_word").text(word + "  " + wordInfo["phonetic"])
+            $(".xqdd_bubble_trans").text(wordInfo["trans"])
+            bubble
+                .css("top", nodeRect.bottom + 'px')
+                .css("left", Math.max(5, Math.floor((nodeRect.left + nodeRect.right) / 2) - 100) + 'px')
+                .css("display", 'flex')
 
-                chrome.runtime.sendMessage({type: "tts", word})
-            }
-        })
-
-
+            chrome.runtime.sendMessage({type: "tts", word})
+            showedNode = currNode
+        }
     }
 }
 
@@ -119,6 +119,9 @@ function handleMouseMove(e) {
         return
     }
     isAllowHideBubble = false
+    if (!classAttr.startsWith("xqdd_highlight_new_word")) {
+        return;
+    }
     currNode = mouseNode
     //延迟显示（防止鼠标一闪而过的情况）
     setTimeout(function () {
@@ -162,25 +165,28 @@ function highlight(nodes) {
     for (var i = 0; i < nodes.length; i++) {
         var node = nodes[i]
         var text = node.textContent
-        if (text == null || !text || text.trim() == "") {
+        if (text.trim() == "") {
             continue
         }
         //新节点的内容
         var newNodeChildrens = highlightNode(text)
-        var parent_node = nodes[i].parentNode
+        var parent_node = node.parentNode
         //替换新节点
-        if (newNodeChildrens == null || !newNodeChildrens || newNodeChildrens.length == 0) {
+        if (newNodeChildrens.length == 0) {
             continue;
         }
         //处理a标签显示异常
         if (parent_node.tagName.toLowerCase() == "a") {
-            $(parent_node).css("display", "inline-block");
+            parent_node.style.display = "inline-block";
+            // $(parent_node).css("display", "inline-block");
         }
         for (var j = 0; j < newNodeChildrens.length; j++) {
-            parent_node.insertBefore(newNodeChildrens[j], nodes[i]);
+            parent_node.insertBefore(newNodeChildrens[j], node);
         }
-        parent_node.removeChild(nodes[i]);
+        parent_node.removeChild(node);
+
     }
+
 
 }
 
@@ -189,18 +195,29 @@ function highlight(nodes) {
  * @param text
  */
 function highlightNode(texts) {
+    // return [$("<span>").css("background", "red").text(texts)[0]]
     //将句子解析成待检测单词列表
     var words = [];
-    var tempTexts = texts
-    while (tempTexts.length > 0) {
-        tempTexts = tempTexts.trim()
-        var pos = tempTexts.indexOf(" ")
-        if (pos < 0) {
-            words.push(tempTexts)
-            break
-        } else {
-            words.push(tempTexts.slice(0, pos))
-            tempTexts = tempTexts.slice(pos)
+    //使用indexof
+    //  var tempTexts = texts
+    // while (tempTexts.length > 0) {
+    //     tempTexts = tempTexts.trim()
+    //     var pos = tempTexts.indexOf(" ")
+    //     if (pos < 0) {
+    //         words.push(tempTexts)
+    //         break
+    //     } else {
+    //         words.push(tempTexts.slice(0, pos))
+    //         tempTexts = tempTexts.slice(pos)
+    //     }
+    // }
+
+    //使用split
+    var tempTexts = texts.split(" ")
+    for (i in tempTexts) {
+        var tempText = tempTexts[i].trim()
+        if (tempText != "") {
+            words.push(tempText)
         }
     }
 
@@ -216,17 +233,26 @@ function highlightNode(texts) {
             //当前所处位置
             var pos2 = remainTexts.indexOf(word)
             //匹配单词
-            if (newWords.indexOf(word.toLowerCase()) !== -1) {
+            // if (newWords.indexOf(word.toLowerCase()) !== -1) {
+            if (newWords.wordInfos.hasOwnProperty(word.toLowerCase())) {
                 //匹配成功
                 //添加已处理部分到节点
-                newNodeChildrens.push(document.createTextNode(checkedText))
-                checkedText = ""
+                if (checkedText != "") {
+                    newNodeChildrens.push(document.createTextNode(checkedText))
+                    checkedText = ""
+                }
                 if (pos2 == 0) {
                     // wordxx类型
                     newNodeChildrens.push(hightlightText(word))
                 } else {
                     //xxwordxx类型
+                    // var preText = remainTexts.slice(0, pos2)
+                    // if (i == 0 && preText.trim() == " ") {
+                    //     //处理<xx> <xxx>之间的空格问题
+                    //     newNodeChildrens.push($("<span>").text(preText)[0])
+                    // } else {
                     newNodeChildrens.push(document.createTextNode(remainTexts.slice(0, pos2)))
+                    // }
                     newNodeChildrens.push(hightlightText(word))
                 }
             } else {
@@ -246,6 +272,7 @@ function highlightNode(texts) {
     }
     return newNodeChildrens
 }
+
 
 /**
  * 高亮单个单词

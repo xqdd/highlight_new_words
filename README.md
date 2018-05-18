@@ -3,15 +3,15 @@ chrome插件，根据有道词典导出的xml生词文件，在网页中标出�
 
 
 # 快速使用
-#### 1. 生词本xml文件导出
+### 1. 生词本xml文件导出
 ![](./images/getting-started/1.jpg '导出生词本步骤1')
 ![](./images/getting-started/2.jpg '导出生词本步骤2')
 ![](./images/getting-started/3.jpg '导出生词本步骤3')
 
-#### 2. 生词本导入到扩展（暂时未作任何校验，请选择正确xml单词本文件）
+### 2. 生词本导入到扩展（暂时未作任何校验，请选择正确xml单词本文件）
 ![](./images/getting-started/4.jpg '导入生词本')
 
-#### 3. 刷新页面并使用
+### 3. 刷新页面并使用
 ![](./images/getting-started/5.jpg '效果演示')
 
 

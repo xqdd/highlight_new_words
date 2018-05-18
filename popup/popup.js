@@ -2,19 +2,19 @@ $("#file").on("change", function () {
     var reader = new FileReader()
     reader.onload = function () {
         var xml = $($.parseXML(this.result))
-        var wordList = [];
         var wordInfos = {}
         var transList = [];
         var phoneticList = [];
-        var originWordList = [];
+        // var originWordList = [];
+        // var wordList = [];
         xml.find("item").each(function (i, val) {
             var node = $(val)
             var word = node.find("word").text()
-            originWordList.push(word)
-            wordList.push(word.toLowerCase())
+            // originWordList.push(word)
+            // wordList.push(word.toLowerCase())
             wordInfos[word.toLowerCase()] = {trans: node.find("trans").text(), phonetic: node.find("phonetic").text()}
         })
-        chrome.storage.local.set({newWords: {wordList, originWordList, wordInfos}})
+        chrome.storage.local.set({newWords: {wordInfos}})
         //提示导入成功
         // chrome.notifications.create({
         //     type: "basic",
