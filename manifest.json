@@ -1,8 +1,9 @@
 {
   "manifest_version": 2,
-  "name": "highlight_new_words",
-  "version": "1.0",
-  "description": "highlight the youdao direct new words",
+  "name": "__MSG_appName__",
+  "version": "1.1",
+  "default_locale": "zh_CN",
+  "description": "__MSG_appDesc__",
   "background": {
     "scripts": [
       "background/background.js"
@@ -42,7 +43,6 @@
   ],
   "permissions": [
     "storage",
-    "tts",
-    "notifications"
+    "tts"
   ]
 }

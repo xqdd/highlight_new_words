@@ -23,10 +23,10 @@ $(function () {
 function init() {
     //从localstorege获取生词列表，高亮所有匹配的节点
     chrome.storage.local.get("newWords", function (result) {
-        var before = new Date().getTime()
-        newWords = result.newWords;
+        // var before = new Date().getTime()
+        // newWords = result.newWords;
         highlight(textNodesUnder(document.body))
-        console.log("解析总耗时：" + (new Date().getTime() - before) + " ms")
+        //console.log("解析总耗时：" + (new Date().getTime() - before) + " ms")
 
         //在插入节点时修改
         document.addEventListener("DOMNodeInserted", onNodeInserted, false);

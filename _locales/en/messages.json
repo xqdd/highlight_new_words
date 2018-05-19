@@ -1,0 +1,10 @@
+{
+  "appName": {
+    "message": "highlight the youdao dictionary new words book",
+    "description": "The title of the application, displayed in the web store."
+  },
+  "appDesc": {
+    "message": "highlight the youdao dictionary new words book content in the english web site",
+    "description": "The description of the application, displayed in the web store."
+  }
+}

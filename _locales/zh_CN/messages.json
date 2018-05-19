@@ -1,0 +1,10 @@
+{
+  "appName": {
+    "message": "有道词典生词本高亮",
+    "description": "The title of the application, displayed in the web store."
+  },
+  "appDesc": {
+    "message": "在英文网站中高亮显示有道词典生词本中的单词",
+    "description": "The description of the application, displayed in the web store."
+  }
+}
