@@ -1,5 +1,5 @@
 //生词本
-var newWords;
+var newWords={};
 //当前要显示的节点
 var currNode
 //鼠标节点（实时）
