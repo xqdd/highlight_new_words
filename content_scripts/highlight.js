@@ -89,7 +89,6 @@ function showBubble() {
                 .css("top", nodeRect.bottom + 'px')
                 .css("left", Math.max(5, Math.floor((nodeRect.left + nodeRect.right) / 2) - 100) + 'px')
                 .css("display", 'flex')
-
             chrome.runtime.sendMessage({type: "tts", word})
             showedNode = currNode
         }
@@ -234,7 +233,7 @@ function highlightNode(texts) {
             var pos2 = remainTexts.indexOf(word)
             //匹配单词
             // if (newWords.indexOf(word.toLowerCase()) !== -1) {
-            if (newWords.wordInfos.hasOwnProperty(word.toLowerCase())) {
+            if (newWords.wordInfos && newWords.wordInfos.hasOwnProperty(word.toLowerCase())) {
                 //匹配成功
                 //添加已处理部分到节点
                 if (checkedText != "") {

@@ -1,7 +1,10 @@
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if (request.type = "tts") {
         if (!!request.word && typeof request.word === "string") {
-            chrome.tts.speak(request.word, {lang: "en", gender: "male"})
+            chrome.tts.speak(request.word, {
+                lang: "en",
+                gender: "male"
+            })
         }
     }
     // sendResponse('我是后台，我已收到你的消息：' + JSON.stringify(request));
@@ -9,5 +12,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
 
 // chrome.tts.getVoices(function (voices) {
-//     console.log(voices)
-// })
+//     for (var i = 0; i < voices.length; i++) {
+//         console.log('  name: ' + voices[i].voiceName);
+//     }
+// });
