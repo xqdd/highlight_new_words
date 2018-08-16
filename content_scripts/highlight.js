@@ -1,5 +1,5 @@
 //生词本
-var newWords={};
+var newWords;
 //当前要显示的节点
 var currNode
 //鼠标节点（实时）
@@ -233,7 +233,7 @@ function highlightNode(texts) {
             var pos2 = remainTexts.indexOf(word)
             //匹配单词
             // if (newWords.indexOf(word.toLowerCase()) !== -1) {
-            if (newWords.wordInfos && newWords.wordInfos.hasOwnProperty(word.toLowerCase())) {
+            if (newWords && newWords.wordInfos && newWords.wordInfos.hasOwnProperty(word.toLowerCase())) {
                 //匹配成功
                 //添加已处理部分到节点
                 if (checkedText != "") {
