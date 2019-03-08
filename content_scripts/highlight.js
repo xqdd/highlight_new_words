@@ -22,14 +22,20 @@ $(function () {
  */
 function init() {
     //从localstorege获取生词列表，高亮所有匹配的节点
-    chrome.storage.local.get("newWords", function (result) {
-        // var before = new Date().getTime()
-        newWords = result.newWords;
-        highlight(textNodesUnder(document.body))
-        //console.log("解析总耗时：" + (new Date().getTime() - before) + " ms")
+    chrome.storage.sync.get(["toggle"], function (r) {
+        if (r.toggle) {
+            chrome.storage.local.get(["newWords"], function (result) {
+                // var before = new Date().getTime()
+                newWords = result.newWords;
+                highlight(textNodesUnder(document.body))
+                //console.log("解析总耗时：" + (new Date().getTime() - before) + " ms")
 
-        //在插入节点时修改
-        document.addEventListener("DOMNodeInserted", onNodeInserted, false);
+                //在插入节点时修改
+                document.addEventListener("DOMNodeInserted", onNodeInserted, false);
+                chrome.runtime.sendMessage({type: "setStyle"})
+            })
+
+        }
     })
 
     //创建鼠标悬浮气泡
@@ -41,6 +47,8 @@ function init() {
             alert("导入生词本成功")
         }
     })
+
+
 }
 
 /**

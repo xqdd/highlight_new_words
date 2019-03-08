@@ -1,10 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <style>
+        .setting > div {
+            /*display: block;*/
+            height: 25px;
+        }
+
+        .setting > div > span {
+            font-weight: bold;
+            font-size: small;
+        }
+
+        .setting > div > input {
+            vertical-align: middle;
+        }
+        .template{
+            margin-left: 5px;
+            display: inline;
+            font-size: 14px;
+        }
+    </style>
+
     <meta charset="UTF-8">
 </head>
 <body>
-<input type="file"  id="file"/>
+<div class="setting">
+    <div>
+        <span>开启高亮：</span><input id="toggle" type="checkbox"/><br/>
+    </div>
+    <div>
+        <span>单词导入：</span><input type="file" id="file"/><br/>
+    </div>
+    <div>
+        <span>自动发音：</span><input id="tts_toggle" type="checkbox"/><br/>
+    </div>
+    <div style="height: 45px">
+        <span>发音人员：<br/></span><select style="margin-top: 3px" id="tts_voices"></select>
+    </div>
+    <div>
+        <span>高亮背景：</span><input id="highlight_background"/>
+        <div class="template" id="highlight_template">English</div>
+    </div>
+    <div>
+        <span>高亮文字：</span><input id="highlight_text"/><br/>
+    </div>
+    <div>
+        <span>弹框背景：</span><input id="bubble_background"/>
+        <div class="template" id="bubble_template">English</div>
+    </div>
+    <div>
+        <span>弹框文字：</span><input id="bubble_text"/><br/>
+    </div>
+    <div>
+        <button id="reset">恢复默认设置</button>
+    </div>
+</div>
 </body>
 <script src="../content_scripts/jquery-3.3.1.js"></script>
 <script src="popup.js"></script>
