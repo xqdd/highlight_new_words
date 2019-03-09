@@ -47,12 +47,8 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
             setStyle(result);
         })
     }
+    sendResponse();
     // sendResponse('我是后台，我已收到你的消息：' + JSON.stringify(request));
 });
 
 
-// chrome.tts.getVoices(function (voices) {
-//     for (var i = 0; i < voices.length; i++) {
-//         console.log('  name: ' + voices[i].voiceName);
-//     }
-// });

@@ -8,6 +8,17 @@ let bubbleTemplate = $("#bubble_template");
 let bubbleText = $("#bubble_text");
 let toggle = $("#toggle");
 let reset = $("#reset");
+let wordStatus = $("#word_status");
+let xmlFile = $("#file");
+
+function getRandomColor() {
+    var rand = Math.floor(Math.random() * 0xFFFFFF).toString(16);
+    if (rand.length == 6) {
+        return rand;
+    } else {
+        return getRandomColor();
+    }
+}
 
 function initStyle() {
     chrome.storage.sync.get([
@@ -29,6 +40,30 @@ function initStyle() {
         }
         chrome.runtime.sendMessage({type: "setStyle"})
     })
+}
+
+
+function updateWordStatus(color, err, num) {
+    if (err) {
+        wordStatus.text("(导入失败)")
+        wordStatus.css("color", "#" + color);
+
+    } else {
+        chrome.storage.local.get("newWords", function (result) {
+            if (result.newWords) {
+                wordStatus.text("(已导入)")
+                if (!!color) {
+                    wordStatus.css("color", "#" + color);
+                }
+                if (!!num) {
+                    wordStatus.text("(已导入" + num + "个词)")
+                }
+            } else {
+                wordStatus.text("(未导入)")
+            }
+        })
+    }
+
 }
 
 function initSettings() {
@@ -65,49 +100,69 @@ function initSettings() {
                         }
                         ttsVoices.append(option);
                     }
-
+                }
+                if (ttsVoices.children().length == 0) {
+                    ttsVoices.append($("<option>无</option>"));
                 }
             });
         //高亮
         initStyle();
+        updateWordStatus()
     })
 }
 
 
-$("#file").on("change", function () {
-    var reader = new FileReader()
-    reader.onload = function () {
-        var xml = $($.parseXML(this.result))
-        var wordInfos = {}
-        var transList = [];
-        var phoneticList = [];
-        // var originWordList = [];
-        // var wordList = [];
-        xml.find("item").each(function (i, val) {
-            var node = $(val)
-            var word = node.find("word").text()
-            // originWordList.push(word)
-            // wordList.push(word.toLowerCase())
-            wordInfos[word.toLowerCase()] = {trans: node.find("trans").text(), phonetic: node.find("phonetic").text()}
-        })
-        chrome.storage.local.set({newWords: {wordInfos}})
-        //提示导入成功
-        // chrome.notifications.create({
-        //     type: "basic",
-        //     title: "test",
-        //     message: "解析单词本成功"
-        // })
-        chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
-            chrome.tabs.sendMessage(tabs[0].id, {type: "importSuccess"});
-        });
+xmlFile.on("change", function () {
+    let file = this.files[0]
+    if (file) {
+        let reader = new FileReader()
+        reader.onload = function () {
+            try {
+                let xml = $($.parseXML(this.result))
+                let wordInfos = {}
+                let transList = [];
+                let phoneticList = [];
+                // var originWordList = [];
+                // var wordList = [];
+                var items = xml.find("item");
+                items.each(function (i, val) {
+                    let node = $(val)
+                    let word = node.find("word").text()
+                    // originWordList.push(word)
+                    // wordList.push(word.toLowerCase())
+                    wordInfos[word.toLowerCase()] = {
+                        trans: node.find("trans").text(),
+                        phonetic: node.find("phonetic").text()
+                    }
+                })
+                chrome.storage.local.set({newWords: {wordInfos}})
+                //提示导入成功
+                // chrome.notifications.create({
+                //     type: "basic",
+                //     title: "test",
+                //     message: "解析单词本成功"
+                // })
+                updateWordStatus(getRandomColor(), false, items.length)
+                // chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
+                //     chrome.tabs.sendMessage(tabs[0].id, {type: "importSuccess"});
+                // });
+            } catch (err) {
+                updateWordStatus(getRandomColor(), true)
+            } finally {
+                xmlFile.val("");
+            }
+        }
+        reader.readAsText(file)
     }
-    reader.readAsText(this.files[0])
 })
 
 
 ttsVoices.on("click", function () {
-    let ttsVoices = JSON.parse($("#tts_voices option:selected").val());
-    chrome.storage.sync.set({ttsVoices})
+    let val = $("#tts_voices option:selected").val();
+    if (val && val !== "" && val !== "无") {
+        let ttsVoices = JSON.parse(val);
+        chrome.storage.sync.set({ttsVoices})
+    }
 })
 ttsToggle.on("click", function () {
     chrome.storage.sync.set({ttsToggle: ttsToggle.prop("checked")})

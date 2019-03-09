@@ -2,6 +2,9 @@
 <html lang="en">
 <head>
     <style>
+        .setting{
+            min-width: 370px;
+        }
         .setting > div {
             /*display: block;*/
             height: 25px;
@@ -15,7 +18,8 @@
         .setting > div > input {
             vertical-align: middle;
         }
-        .template{
+
+        .template {
             margin-left: 5px;
             display: inline;
             font-size: 14px;
@@ -30,13 +34,15 @@
         <span>开启高亮：</span><input id="toggle" type="checkbox"/><br/>
     </div>
     <div>
-        <span>单词导入：</span><input type="file" id="file"/><br/>
+        <span>单词导入：</span><input type="file" id="file" style="width:180px"/>
+        <span class="template" id="word_status">(未导入)</span>
+        <br/>
     </div>
     <div>
         <span>自动发音：</span><input id="tts_toggle" type="checkbox"/><br/>
     </div>
     <div style="height: 45px">
-        <span>发音人员：<br/></span><select style="margin-top: 3px" id="tts_voices"></select>
+        <span>发音人员：<br/></span><select style="margin-top: 3px;height:20px;" id="tts_voices"></select>
     </div>
     <div>
         <span>高亮背景：</span><input id="highlight_background"/>
@@ -60,3 +66,5 @@
 <script src="../content_scripts/jquery-3.3.1.js"></script>
 <script src="popup.js"></script>
 </html>
+
+
