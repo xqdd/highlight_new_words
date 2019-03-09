@@ -197,5 +197,8 @@ reset.on("click", function () {
         })
     }
 })
+$("#help").on("click", function () {
+    chrome.tabs.create({url: 'https://github.com/XQDD/highlight_new_words'});
+})
 
 initSettings()
