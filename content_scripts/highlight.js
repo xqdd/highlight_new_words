@@ -22,7 +22,7 @@ $(function () {
  */
 function init() {
     //从localstorege获取生词列表，高亮所有匹配的节点
-    chrome.storage.sync.get(["toggle"], function (r) {
+    chrome.storage.local.get(["toggle"], function (r) {
         if (r.toggle) {
             chrome.storage.local.get(["newWords"], function (result) {
                 // var before = new Date().getTime()

@@ -1,5 +1,5 @@
 function initSettings() {
-    chrome.storage.sync.set({
+    chrome.storage.local.set({
         toggle: true,
         ttsToggle: true,
         ttsVoices: {
@@ -25,8 +25,8 @@ function setStyle(result) {
 }
 
 //初始化配置
-chrome.storage.sync.get("settings", function (result) {
-    if (!result.settings) {
+chrome.storage.local.get("settings", function (result) {
+    if (!result.ttsVoices) {
         initSettings();
     }
 });
@@ -34,8 +34,9 @@ chrome.storage.sync.get("settings", function (result) {
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if (request.type === "tts") {
         if (!!request.word && typeof request.word === "string") {
-            chrome.storage.sync.get(["ttsToggle", "ttsVoices"], function (result) {
+            chrome.storage.local.get(["ttsToggle", "ttsVoices"], function (result) {
                 if (result.ttsToggle) {
+                    console.log(result.ttsVoices)
                     chrome.tts.speak(request.word, {...result.ttsVoices});
                 }
             })
@@ -43,7 +44,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     } else if (request.type === "resetSettings") {
         initSettings()
     } else if (request.type === "setStyle") {
-        chrome.storage.sync.get(["highlightBackground", "highlightText", "bubbleBackground", "bubbleText"], function (result) {
+        chrome.storage.local.get(["highlightBackground", "highlightText", "bubbleBackground", "bubbleText"], function (result) {
             setStyle(result);
         })
     }

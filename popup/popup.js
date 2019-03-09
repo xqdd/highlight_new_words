@@ -21,7 +21,7 @@ function getRandomColor() {
 }
 
 function initStyle() {
-    chrome.storage.sync.get([
+    chrome.storage.local.get([
         "highlightBackground"
         , "highlightText"
         , "bubbleBackground"
@@ -67,7 +67,7 @@ function updateWordStatus(color, err, num) {
 }
 
 function initSettings() {
-    chrome.storage.sync.get([
+    chrome.storage.local.get([
         "ttsToggle"
         , "ttsVoices"
         , "toggle"
@@ -85,11 +85,14 @@ function initSettings() {
                 for (let i = 0; i < voices.length; i++) {
                     let voice = voices[i];
                     delete voice.eventTypes;
-                    if (voice.lang.toLowerCase().startsWith("en")) {
+                    if (!voice.lang
+                        || voice.lang.toLowerCase().startsWith("en")
+                        || voice.lang.toLowerCase().startsWith("xx")) {
                         let option = $("<option>")
                             .text((index++)
                                 + ":" + voice.voiceName
-                                + "，" + voice.lang
+                                + (!voice.lang || voice.lang.toLowerCase().startsWith("xx")
+                                    ? "" : "，" + voice.lang)
                                 + (voice.remote ? "，远程源" : "")
                             );
                         delete voice.remote
@@ -161,32 +164,32 @@ ttsVoices.on("click", function () {
     let val = $("#tts_voices option:selected").val();
     if (val && val !== "" && val !== "无") {
         let ttsVoices = JSON.parse(val);
-        chrome.storage.sync.set({ttsVoices})
+        chrome.storage.local.set({ttsVoices})
     }
 })
 ttsToggle.on("click", function () {
-    chrome.storage.sync.set({ttsToggle: ttsToggle.prop("checked")})
+    chrome.storage.local.set({ttsToggle: ttsToggle.prop("checked")})
 })
 toggle.on("click", function () {
-    chrome.storage.sync.set({toggle: toggle.prop("checked")})
+    chrome.storage.local.set({toggle: toggle.prop("checked")})
 })
 highlightText.on("input", function () {
-    chrome.storage.sync.set({highlightText: highlightText.val()}, function () {
+    chrome.storage.local.set({highlightText: highlightText.val()}, function () {
         initStyle()
     })
 })
 highlightBackground.on("input", function () {
-    chrome.storage.sync.set({highlightBackground: highlightBackground.val()}, function () {
+    chrome.storage.local.set({highlightBackground: highlightBackground.val()}, function () {
         initStyle()
     })
 })
 bubbleText.on("input", function () {
-    chrome.storage.sync.set({bubbleText: bubbleText.val()}, function () {
+    chrome.storage.local.set({bubbleText: bubbleText.val()}, function () {
         initStyle()
     })
 })
 bubbleBackground.on("input", function () {
-    chrome.storage.sync.set({bubbleBackground: bubbleBackground.val()}, function () {
+    chrome.storage.local.set({bubbleBackground: bubbleBackground.val()}, function () {
         initStyle()
     })
 })
@@ -199,6 +202,9 @@ reset.on("click", function () {
 })
 $("#help").on("click", function () {
     chrome.tabs.create({url: 'https://github.com/XQDD/highlight_new_words'});
+})
+$("#moreVoices").on("click", function () {
+    chrome.tabs.create({url: 'https://chrome.google.com/webstore/detail/speakit/pgeolalilifpodheeocdmbhehgnkkbak'});
 })
 
 initSettings()
