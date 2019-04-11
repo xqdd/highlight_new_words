@@ -1,11 +1,12 @@
 {
   "manifest_version": 2,
   "name": "__MSG_appName__",
-  "version": "1.2.2",
+  "version": "1.2.4",
   "default_locale": "zh_CN",
   "description": "__MSG_appDesc__",
   "background": {
     "scripts": [
+      "lib/axios.js",
       "background/background.js"
     ]
   },
@@ -38,7 +39,7 @@
         "<all_urls>"
       ],
       "js": [
-        "content_scripts/jquery-3.3.1.js",
+        "lib/jquery-3.3.1.js",
         "content_scripts/highlight.js"
       ],
       "css": [
@@ -47,6 +48,7 @@
     }
   ],
   "permissions": [
+    "cookies",
     "storage",
     "tts",
     "tabs",

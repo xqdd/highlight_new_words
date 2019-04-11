@@ -15,3 +15,16 @@
     width: auto;
     height: auto;
 }
+
+.xqdd_bubble_delete {
+    position: absolute;
+    color: rgba(255, 255, 255, 0.6);
+    right: 2px;
+    top: 0;
+    cursor: pointer;
+}
+
+.xqdd_bubble_delete:hover {
+    background-color: #e81123;
+    color: white;
+}

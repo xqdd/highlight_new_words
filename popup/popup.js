@@ -10,6 +10,36 @@ let toggle = $("#toggle");
 let reset = $("#reset");
 let wordStatus = $("#word_status");
 let xmlFile = $("#file");
+let syncButton = $("#sync");
+let autoSync = $("#auto_sync");
+let loginATag = $("#login");
+
+//日期加强
+
+// 对Date的扩展，将 Date 转化为指定格式的String
+// 月(M)、日(d)、小时(h)、分(m)、秒(s)、季度(q) 可以用 1-2 个占位符，
+// 年(y)可以用 1-4 个占位符，毫秒(S)只能用 1 个占位符(是 1-3 位的数字)
+// 例子：
+// (new Date()).Format("yyyy-MM-dd hh:mm:ss.S") ==> 2006-07-02 08:09:04.423
+// (new Date()).Format("yyyy-M-d h:m:s.S")      ==> 2006-7-2 8:9:4.18
+Date.prototype.format = function (fmt) { //author: meizz
+    var o = {
+        "M+": this.getMonth() + 1,                 //月份
+        "d+": this.getDate(),                    //日
+        "h+": this.getHours(),                   //小时
+        "m+": this.getMinutes(),                 //分
+        "s+": this.getSeconds(),                 //秒
+        "q+": Math.floor((this.getMonth() + 3) / 3), //季度
+        "S": this.getMilliseconds()             //毫秒
+    };
+    if (/(y+)/.test(fmt))
+        fmt = fmt.replace(RegExp.$1, (this.getFullYear() + "").substr(4 - RegExp.$1.length));
+    for (var k in o)
+        if (new RegExp("(" + k + ")").test(fmt))
+            fmt = fmt.replace(RegExp.$1, (RegExp.$1.length == 1) ? (o[k]) : (("00" + o[k]).substr(("" + o[k]).length)));
+    return fmt;
+}
+
 
 function getRandomColor() {
     var rand = Math.floor(Math.random() * 0xFFFFFF).toString(16);
@@ -20,6 +50,7 @@ function getRandomColor() {
     }
 }
 
+//单词样式相关
 function initStyle() {
     chrome.storage.local.get([
         "highlightBackground"
@@ -47,34 +78,45 @@ function updateWordStatus(color, err, num) {
     if (err) {
         wordStatus.text("(导入失败)")
         wordStatus.css("color", "#" + color);
-
     } else {
         chrome.storage.local.get("newWords", function (result) {
             if (result.newWords) {
-                wordStatus.text("(已导入)")
+                wordStatus.text("(已导入" + Object.keys(result.newWords.wordInfos).length + "个词)")
                 if (!!color) {
                     wordStatus.css("color", "#" + color);
                 }
                 if (!!num) {
-                    wordStatus.text("(已导入" + num + "个词)")
+                    wordStatus.text("(已导入" + Object.keys(result.newWords.wordInfos).length + "个词)")
                 }
             } else {
-                wordStatus.text("(未导入)")
+                wordStatus.text("(未导入单词)")
             }
         })
     }
 
 }
 
+//配置
 function initSettings() {
     chrome.storage.local.get([
         "ttsToggle"
         , "ttsVoices"
+        , "autoSync"
+        , "syncTime"
+        , "cookie"
         , "toggle"
     ], function (result) {
+        //总开关
         toggle.prop("checked", result.toggle)
         //发音开关
         ttsToggle.prop("checked", result.ttsToggle)
+        //自动同步开关
+        autoSync.prop("checked", result.autoSync)
+        //是否有cookie
+        if (!!result.cookie) {
+            loginATag.css("display", "none")
+            syncButton.text("同步单词（上次同步于 " + (new Date(result.syncTime)).format("yyyy-MM-dd hh:mm:ss") + " ）")
+        }
         //发音人员
         chrome.tts.getVoices(
             function (voices) {
@@ -134,6 +176,7 @@ xmlFile.on("change", function () {
                     // originWordList.push(word)
                     // wordList.push(word.toLowerCase())
                     wordInfos[word.toLowerCase()] = {
+                        word,
                         trans: node.find("trans").text(),
                         phonetic: node.find("phonetic").text()
                     }
@@ -160,6 +203,7 @@ xmlFile.on("change", function () {
 })
 
 
+//事件监听
 ttsVoices.on("click", function () {
     let val = $("#tts_voices option:selected").val();
     if (val && val !== "" && val !== "无") {
@@ -172,6 +216,9 @@ ttsToggle.on("click", function () {
 })
 toggle.on("click", function () {
     chrome.storage.local.set({toggle: toggle.prop("checked")})
+})
+autoSync.on("click", function () {
+    chrome.storage.local.set({autoSync: autoSync.prop("checked")})
 })
 highlightText.on("input", function () {
     chrome.storage.local.set({highlightText: highlightText.val()}, function () {
@@ -206,5 +253,19 @@ $("#help").on("click", function () {
 $("#moreVoices").on("click", function () {
     chrome.tabs.create({url: 'https://chrome.google.com/webstore/detail/speakit/pgeolalilifpodheeocdmbhehgnkkbak'});
 })
+$("#login").on("click", function () {
+    chrome.tabs.create({url: 'http://dict.youdao.com/wordbook/wordlist'});
+})
+syncButton.click(function () {
+    syncButton.attr("disabled", "")
+    chrome.runtime.sendMessage({type: "sync"}, function (msg) {
+        if (msg) {
+            alert(msg)
+        }
+        initSettings()
+        syncButton.removeAttr("disabled")
+    })
+})
+
 
 initSettings()

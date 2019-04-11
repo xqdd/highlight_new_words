@@ -11,6 +11,7 @@ var isAllowHideBubble = true
 //气泡显示/隐藏延迟时间(ms)
 var delayed = 100
 //生词信息列表
+var currWord
 
 $(function () {
     init()
@@ -57,9 +58,22 @@ function init() {
 function createBubble() {
     //创建添加到body中
     var div = $("<div>").attr("class", "xqdd_bubble")
+    var deleteButton = $("<span>")
+        .attr("class", "xqdd_bubble_delete")
+        .text("✖")
+        .click(() => {
+            if (window.confirm("删除单词？（若已登录云端，云端单词会同时删除）")) {
+                console.log(currWord)
+                chrome.runtime.sendMessage({type: "delete", word: currWord}, function (msg) {
+                    if (msg) {
+                        alert(msg)
+                    }
+                })
+            }
+        })
     var word = $("<span>").attr("class", "xqdd_bubble_word")
     var trans = $("<span>").attr("class", "xqdd_bubble_trans")
-    div.append(word).append(trans)
+    div.append(deleteButton).append(word).append(trans)
     $(document.body).append(div)
 
     //添加鼠标进入离开事件
@@ -93,6 +107,7 @@ function showBubble() {
             var wordInfo = newWords.wordInfos[word.toLowerCase()]
             $(".xqdd_bubble_word").text(word + "  " + wordInfo["phonetic"])
             $(".xqdd_bubble_trans").text(wordInfo["trans"])
+            currWord = wordInfo["word"]
             bubble
                 .css("top", nodeRect.bottom + 'px')
                 .css("left", Math.max(5, Math.floor((nodeRect.left + nodeRect.right) / 2) - 100) + 'px')

@@ -34,10 +34,13 @@ chrome插件，根据有道词典导出的xml生词文件，在网页中标出�
 - [x] 鼠标悬浮发音
 - [x] 发音可配置（开关、语速、男女、种类等）
 - [x] 提供多种高亮样式和自定义高亮样式
-- [ ] <s>手动导入导出生词本确实不便，寻找后台自动导入的可能性</s>
 - [ ] <s>支持高亮短语</s>
+- [x] 手动导入导出生词本确实不便，寻找后台自动导入的可能性
 - [ ] 拓展图标显示页面生词个数
 
 # 鸣谢
 - https://github.com/mechatroner/aided_reading
 - http://iconfont.cn/
+>待研究
+>- https://github.com/waynecz/dadda-translate-crx
+>- https://github.com/cclient/chrome-extensions-youdaowithwordnode
