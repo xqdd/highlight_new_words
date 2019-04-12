@@ -62,11 +62,10 @@ function createBubble() {
         .attr("class", "xqdd_bubble_delete")
         .text("✖")
         .click(() => {
-            if (window.confirm("删除单词？（若已登录云端，云端单词会同时删除）")) {
-                console.log(currWord)
+            if (window.confirm("确认删除单词？（若已登录云端，云端单词会同时删除），删除后刷新页面生效")) {
                 chrome.runtime.sendMessage({type: "delete", word: currWord}, function (msg) {
                     if (msg) {
-                        alert(msg)
+                        // alert(msg)
                     }
                 })
             }

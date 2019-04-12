@@ -28,12 +28,12 @@ function setStyle(result) {
 }
 
 //初始化配置
-chrome.storage.local.get(["ttsVoices", "syncTime", "autoSync"], function (result) {
+chrome.storage.local.get(["ttsVoices", "syncTime", "autoSync", "cookie"], function (result) {
     if (!result.ttsVoices) {
         initSettings();
     }
-    if (result.autoSync && (new Date().getTime() - result.syncTime) > 60 * 60 * 24) {
-        console.log("同步")
+    if (!!result.cookie && result.autoSync && (new Date().getTime() - result.syncTime) > 60 * 60 * 24 * 1000) {
+        console.log("同步中。。。")
         sync(() => {
         })
     }
@@ -50,7 +50,7 @@ let sync = function (sendResponse) {
                 sendResponse("同步成功");
             });
         }).catch(e => {
-            if (e.response.status === 401) {
+            if (e.response.status === 401 || e.response.status === 400) {
                 chrome.storage.local.set({cookie: false}, () => {
                     sendResponse("未登录，请登陆后再试");
                 })
@@ -84,7 +84,7 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         let word = request.word;
         getCookie(cookie => {
             axios.post('https://tyzx.club/highlightword/word/delete', {cookie, word}).catch(e => {
-                if (e.response.status === 401) {
+                if (e.response.status === 401 || e.response.status === 400) {
                     chrome.storage.local.set({cookie: false})
                 }
             });
@@ -110,6 +110,7 @@ function getCookie(callback) {
             callback(result.cookie)
         } else {
             chrome.cookies.getAll({url: "http://dict.youdao.com/wordbook/wordlist"}, cookies => {
+                cookies.map(c => c.name + "=" + c.value).join(";")
                 callback(cookies.map(c => c.name + "=" + c.value).join(";"))
             })
         }
