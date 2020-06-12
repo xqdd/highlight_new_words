@@ -12,6 +12,7 @@ var isAllowHideBubble = true
 var delayed = 100
 //生词信息列表
 var currWord
+var currWordData
 
 $(function () {
     init()
@@ -63,7 +64,7 @@ function createBubble() {
         .text("✖")
         .click(() => {
             if (window.confirm("确认删除单词？（若已登录云端，云端单词会同时删除），删除后刷新页面生效")) {
-                chrome.runtime.sendMessage({type: "delete", word: currWord}, function (msg) {
+                chrome.runtime.sendMessage({type: "delete", wordData: currWordData}, function (msg) {
                     if (msg) {
                         // alert(msg)
                     }
@@ -107,6 +108,7 @@ function showBubble() {
             $(".xqdd_bubble_word").text(word + "  " + wordInfo["phonetic"])
             $(".xqdd_bubble_trans").text(wordInfo["trans"])
             currWord = wordInfo["word"]
+            currWordData = wordInfo
             bubble
                 .css("top", nodeRect.bottom + 'px')
                 .css("left", Math.max(5, Math.floor((nodeRect.left + nodeRect.right) / 2) - 100) + 'px')

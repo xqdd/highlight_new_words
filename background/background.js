@@ -1,3 +1,5 @@
+const HOST = "http://127.0.0.1:9332";
+
 function initSettings() {
     chrome.storage.local.set({
         toggle: true,
@@ -41,22 +43,20 @@ chrome.storage.local.get(["ttsVoices", "syncTime", "autoSync", "cookie"], functi
 
 let sync = function (sendResponse) {
     getCookie(cookie => {
-        axios.post('https://tyzx.club/highlightword/word/getWords', {cookie}).then(res => {
+        axios.get("http://dict.youdao.com/wordbook/webapi/words?limit=100000000&offset=0").then(({data: {data}}) => {
             let wordInfos = {};
-            res.data.data.forEach(w => {
+            if (data.total === 0) {
+                sendResponse("同步成功，但生词本无内容，若实际有内容，请尝试重新登录");
+                return
+            }
+            data.itemList.forEach(w => {
                 wordInfos[w.word.toLowerCase()] = w
             });
             chrome.storage.local.set({newWords: {wordInfos}, cookie, syncTime: new Date().getTime()}, () => {
                 sendResponse("同步成功");
             });
         }).catch(e => {
-            if (e.response.status === 401 || e.response.status === 400) {
-                chrome.storage.local.set({cookie: false}, () => {
-                    sendResponse("未登录，请登陆后再试");
-                })
-            } else {
-                sendResponse("网络错误或服务器出错，请检查网络后再试");
-            }
+            sendResponse("网络错误或服务器出错，请检查网络后再试或重新登录");
         });
     })
 };
@@ -81,14 +81,9 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         sync(sendResponse);
     } else if (request.type === "delete") {
         needResponse = false;
-        let word = request.word;
-        getCookie(cookie => {
-            axios.post('https://tyzx.club/highlightword/word/delete', {cookie, word}).catch(e => {
-                if (e.response.status === 401 || e.response.status === 400) {
-                    chrome.storage.local.set({cookie: false})
-                }
-            });
-        });
+        let wordData = request.wordData;
+        let word = wordData.word;
+        axios.get(`http://dict.youdao.com/wordbook/webapi/delete?itemId=${wordData.itemId}`)
         chrome.storage.local.get("newWords", function (result) {
             let wordInfos = result.newWords.wordInfos;
             delete wordInfos[word.toLowerCase()];
