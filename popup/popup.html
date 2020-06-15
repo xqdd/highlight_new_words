@@ -53,17 +53,30 @@
         <select style="width: 300px" id="tts_voices"></select>
     </div>
     <div>
-        <span>单词同步：</span>
-        <button  type="button" id="sync">未登录，请点击链接登录后，再点击此处同步</button>
-        <a id="login"
-           href="http://dict.youdao.com/wordbook/wordlist" >登录</a>
+        <span>同步状态：</span>
+        <p id="word_status">未导入单词, 请登陆相关平台后点击同步单词进行同步</p>
+        <br/>
+    </div>
+    <hr/>
+    <div>
+        <span>有道词典：</span>
+        <button type="button" class="sync" dictionaryType="0">同步单词</button>
+        <a id="youdao_login"
+           href="http://dict.youdao.com/wordbook/wordlist">登录</a>
         <br/>
     </div>
     <div>
         <span>手动导入：</span><input type="file" id="file" style="width:180px"/>
-        <span class="template" id="word_status">(未导入单词)</span>
         <br/>
     </div>
+    <hr/>
+    <div>
+        <span>欧路词典：</span>
+        <button type="button" class="sync" dictionaryType="1">同步单词</button>
+        <a id="olu_login" href="https://my.eudic.net/studylist">登录</a>
+        <br/>
+    </div>
+    <hr/>
     <div>
         <span>高亮背景：</span><input id="highlight_background"/>
         <div class="template" id="highlight_template">English</div>
@@ -81,7 +94,9 @@
     <div>
         <button id="reset">恢复默认设置</button>
         <a id="help" href="https://github.com/XQDD/highlight_new_words">使用说明</a>
-        <a id="moreVoices" href="https://chrome.google.com/webstore/detail/speakit/pgeolalilifpodheeocdmbhehgnkkbak">更多声音</a>
+        <a id="moreVoices"
+           href="https://chrome.google.com/webstore/detail/speakit-text-to-speech-fo/aljmkoflmjkklddjideacgmofobfkhkd?utm_source=chrome-ntp-iconk">更多声音(TTS
+            Engine)</a>
     </div>
 </div>
 </body>

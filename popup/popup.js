@@ -10,9 +10,10 @@ let toggle = $("#toggle");
 let reset = $("#reset");
 let wordStatus = $("#word_status");
 let xmlFile = $("#file");
-let syncButton = $("#sync");
+let syncButton = $(".sync");
 let autoSync = $("#auto_sync");
-let loginATag = $("#login");
+let youdaoLoginATag = $("#youdao_login");
+let oluLoginATag = $("#olu_login");
 
 //日期加强
 
@@ -74,26 +75,31 @@ function initStyle() {
 }
 
 
-function updateWordStatus(color, err, num) {
+function updateWordStatus(color, err) {
+    let status = "";
     if (err) {
-        wordStatus.text("(导入失败)")
+        status = "导入失败"
         wordStatus.css("color", "#" + color);
     } else {
-        chrome.storage.local.get("newWords", function (result) {
+        chrome.storage.local.get(["newWords", "syncTime", "dictionaryType"], function (result) {
             if (result.newWords) {
-                wordStatus.text("(已导入" + Object.keys(result.newWords.wordInfos).length + "个词)")
+                status = Object.keys(result.newWords.wordInfos).length + "个词"
                 if (!!color) {
                     wordStatus.css("color", "#" + color);
                 }
-                if (!!num) {
-                    wordStatus.text("(已导入" + Object.keys(result.newWords.wordInfos).length + "个词)")
+                status += ", 同步于" + (new Date(result.syncTime)).format("yyyy-MM-dd hh:mm:ss")
+                if (result.dictionaryType == 0) {
+                    status = "有道, " + status
+                } else if (result.dictionaryType == 1) {
+                    status = "欧路, " + status
                 }
             } else {
-                wordStatus.text("(未导入单词)")
+                status = "未导入单词, 请登陆相关平台后点击同步单词进行同步"
             }
+            wordStatus.text(status)
         })
     }
-
+    wordStatus.text(status)
 }
 
 //配置
@@ -104,6 +110,7 @@ function initSettings() {
         , "autoSync"
         , "syncTime"
         , "cookie"
+        , "dictionaryType"
         , "toggle"
     ], function (result) {
         //总开关
@@ -112,11 +119,6 @@ function initSettings() {
         ttsToggle.prop("checked", result.ttsToggle)
         //自动同步开关
         autoSync.prop("checked", result.autoSync)
-        //是否有cookie
-        if (!!result.cookie) {
-            loginATag.css("display", "none")
-            syncButton.text("同步单词（上次同步于 " + (new Date(result.syncTime)).format("yyyy-MM-dd hh:mm:ss") + " ）")
-        }
         //发音人员
         chrome.tts.getVoices(
             function (voices) {
@@ -152,6 +154,7 @@ function initSettings() {
             });
         //高亮
         initStyle();
+        //同步状态
         updateWordStatus()
     })
 }
@@ -188,7 +191,7 @@ xmlFile.on("change", function () {
                 //     title: "test",
                 //     message: "解析单词本成功"
                 // })
-                updateWordStatus(getRandomColor(), false, items.length)
+                updateWordStatus(getRandomColor(), false)
                 // chrome.tabs.query({active: true, currentWindow: true}, function (tabs) {
                 //     chrome.tabs.sendMessage(tabs[0].id, {type: "importSuccess"});
                 // });
@@ -253,17 +256,21 @@ $("#help").on("click", function () {
 $("#moreVoices").on("click", function () {
     chrome.tabs.create({url: 'https://chrome.google.com/webstore/detail/speakit/pgeolalilifpodheeocdmbhehgnkkbak'});
 })
-$("#login").on("click", function () {
+youdaoLoginATag.on("click", function () {
     chrome.tabs.create({url: 'http://dict.youdao.com/wordbook/wordlist'});
 })
+oluLoginATag.on("click", function () {
+    chrome.tabs.create({url: 'https://my.eudic.net/studylist'});
+})
 syncButton.click(function () {
-    syncButton.attr("disabled", "")
-    chrome.runtime.sendMessage({type: "sync"}, function (msg) {
+    let clickedSyncButton = $(this)
+    clickedSyncButton.attr("disabled", "")
+    chrome.runtime.sendMessage({type: "sync", dictionaryType: $(this).attr("dictionaryType")}, function (msg) {
         if (msg) {
             alert(msg)
         }
         initSettings()
-        syncButton.removeAttr("disabled")
+        clickedSyncButton.removeAttr("disabled")
     })
 })
 

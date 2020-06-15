@@ -63,8 +63,10 @@ function createBubble() {
         .attr("class", "xqdd_bubble_delete")
         .text("✖")
         .click(() => {
-            if (window.confirm("确认删除单词？（若已登录云端，云端单词会同时删除），删除后刷新页面生效")) {
+            if (window.confirm("确认删除单词？（若已登录云端，云端单词会同时删除）")) {
                 chrome.runtime.sendMessage({type: "delete", wordData: currWordData}, function (msg) {
+                    //取消高亮删除的单词
+                    $(`xqdd_highlight_new_word[word='${currWordData.word}']`).attr("class", "xqdd_highlight_disable")
                     if (msg) {
                         // alert(msg)
                     }
@@ -105,8 +107,8 @@ function showBubble() {
             var nodeRect = currNode.getBoundingClientRect();
             var word = $(currNode).text()
             var wordInfo = newWords.wordInfos[word.toLowerCase()]
-            $(".xqdd_bubble_word").text(word + "  " + wordInfo["phonetic"])
-            $(".xqdd_bubble_trans").text(wordInfo["trans"])
+            $(".xqdd_bubble_word").html((wordInfo.link ? wordInfo.link : wordInfo.word) + "  " + `<span>${wordInfo["phonetic"]}</span>`)
+            $(".xqdd_bubble_trans").html(wordInfo["trans"])
             currWord = wordInfo["word"]
             currWordData = wordInfo
             bubble
@@ -127,18 +129,18 @@ function handleMouseMove(e) {
     //获取鼠标所在节点
     mouseNode = document.elementFromPoint(e.clientX, e.clientY);
     if (!mouseNode) {
-        hideBubbleDelayed()
+        hideBubbleDelayed(mouseNode)
         return
     }
     var classAttr = "";
     try {
         classAttr = mouseNode.getAttribute("class");
     } catch (exc) {
-        hideBubbleDelayed()
+        hideBubbleDelayed(mouseNode)
         return
     }
     if (!classAttr || !classAttr.startsWith("xqdd_")) {
-        hideBubbleDelayed()
+        hideBubbleDelayed(mouseNode)
         return
     }
     isAllowHideBubble = false
@@ -162,11 +164,18 @@ function handleMouseMove(e) {
 /**
  * 延迟隐藏气泡
  */
-function hideBubbleDelayed() {
-    isAllowHideBubble = true
-    setTimeout(function () {
-        hideBubble();
-    }, delayed);
+function hideBubbleDelayed(mouseNode) {
+    if (!isAllowHideBubble) {
+        if (mouseNode) {
+            if ($(mouseNode).parents(".xqdd_bubble").length > 0) {
+                return;
+            }
+        }
+        isAllowHideBubble = true
+        setTimeout(function () {
+            hideBubble();
+        }, delayed);
+    }
 }
 
 
@@ -191,6 +200,7 @@ function highlight(nodes) {
         if (text.trim() == "") {
             continue
         }
+        //处理单个节点
         //新节点的内容
         var newNodeChildrens = highlightNode(text)
         var parent_node = node.parentNode
@@ -201,13 +211,12 @@ function highlight(nodes) {
         //处理a标签显示异常
         if (parent_node.tagName.toLowerCase() == "a") {
             parent_node.style.display = "inline-block";
-            // $(parent_node).css("display", "inline-block");
+            parent_node.style.margin = "auto";
         }
         for (var j = 0; j < newNodeChildrens.length; j++) {
             parent_node.insertBefore(newNodeChildrens[j], node);
         }
         parent_node.removeChild(node);
-
     }
 
 
@@ -236,7 +245,7 @@ function highlightNode(texts) {
     // }
 
     //使用split
-    var tempTexts = texts.split(" ")
+    var tempTexts = texts.split(/\s/)
     for (i in tempTexts) {
         var tempText = tempTexts[i].trim()
         if (tempText != "") {
@@ -254,7 +263,7 @@ function highlightNode(texts) {
         for (var i = 0; i < words.length; i++) {
             var word = words[i]
             //当前所处位置
-            var pos2 = remainTexts.indexOf(word)
+            var currPos = remainTexts.indexOf(word)
             //匹配单词
             // if (newWords.indexOf(word.toLowerCase()) !== -1) {
             if (newWords && newWords.wordInfos && newWords.wordInfos.hasOwnProperty(word.toLowerCase())) {
@@ -264,26 +273,27 @@ function highlightNode(texts) {
                     newNodeChildrens.push(document.createTextNode(checkedText))
                     checkedText = ""
                 }
-                if (pos2 == 0) {
+                if (currPos == 0) {
                     // wordxx类型
                     newNodeChildrens.push(hightlightText(word))
                 } else {
                     //xxwordxx类型
-                    // var preText = remainTexts.slice(0, pos2)
+                    // var preText = remainTexts.slice(0, currPos)
                     // if (i == 0 && preText.trim() == " ") {
                     //     //处理<xx> <xxx>之间的空格问题
                     //     newNodeChildrens.push($("<span>").text(preText)[0])
                     // } else {
-                    newNodeChildrens.push(document.createTextNode(remainTexts.slice(0, pos2)))
+                    newNodeChildrens.push(document.createTextNode(remainTexts.slice(0, currPos)))
                     // }
                     newNodeChildrens.push(hightlightText(word))
                 }
+                chrome.runtime.sendMessage({type: "count", word})
             } else {
                 //匹配失败，追加到已处理字符串
-                checkedText += remainTexts.slice(0, pos2 + word.length)
+                checkedText += remainTexts.slice(0, currPos + word.length)
             }
             //删除已处理的字符(到当前单词的位置)
-            remainTexts = remainTexts.slice(pos2 + word.length)
+            remainTexts = remainTexts.slice(currPos + word.length)
         }
         //处理最末尾
         if (newNodeChildrens.length != 0) {
@@ -304,7 +314,10 @@ function highlightNode(texts) {
  */
 function hightlightText(text) {
     //注意jqury对象转为dom对象使用[0]或者.get(0)
-    return $("<xqdd_highlight_new_word>").attr("class", "xqdd_highlight_new_word").text(text)[0];
+    return $("<xqdd_highlight_new_word>")
+        .attr("word", text.toLowerCase())
+        .attr("class", "xqdd_highlight_new_word")
+        .text(text)[0];
 }
 
 
@@ -314,7 +327,8 @@ function hightlightText(text) {
  * @returns {Array}
  */
 function textNodesUnder(el) {
-    var n, a = [], walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, mygoodfilter, false);
+    var n, a = [],
+        walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, mygoodfilter, false);
     while (n = walk.nextNode()) {
         a.push(n);
     }
@@ -369,6 +383,9 @@ function onNodeInserted(event) {
     var inobj = event.target;
     if (!inobj)
         return;
+    if ($(inobj).parents(".xqdd_bubble").length > 0) {
+        return
+    }
     var classattr = null;
     if (typeof inobj.getAttribute !== 'function') {
         return;
