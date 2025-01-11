@@ -31,6 +31,23 @@
             display: inline;
             font-size: 14px;
         }
+        .color-schemes {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .color-schemes > span {
+            font-weight: bold;
+            font-size: small;
+            margin-right: 5px;
+        }
+        .color-scheme-button {
+            border: none;
+            padding: 5px 10px;
+            margin-right: 5px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
     </style>
 
     <meta charset="UTF-8">
@@ -90,6 +107,14 @@
     </div>
     <div>
         <span>弹框文字：</span><input id="bubble_text"/><br/>
+    </div>
+    <div class="color-schemes">
+        <span>配色方案：</span>
+        <button class="color-scheme-button" data-bg="#f0f0f0" data-text="#333" style="background-color:#f0f0f0;color:#333;">Light</button>
+        <button class="color-scheme-button" data-bg="#e8f5e9" data-text="#1b5e20" style="background-color:#e8f5e9;color:#1b5e20;">Green</button>
+        <button class="color-scheme-button" data-bg="#fbe9e7" data-text="#bf360c" style="background-color:#fbe9e7;color:#bf360c;">Red</button>
+        <button class="color-scheme-button" data-bg="#eaeef6" data-text="#2a5598" style="background-color:#eaeef6;color:#2a5598;">Blue</button>
+        <button class="color-scheme-button" data-bg="#f5f5f5" data-text="#35a3ff" style="background-color:#f5f5f5;color:#35a3ff;">Sky</button>
     </div>
     <div>
         <button id="reset">恢复默认设置</button>
