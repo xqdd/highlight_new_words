@@ -41,10 +41,7 @@ function setStyle(result) {
 }
 
 //初始化配置
-chrome.storage.local.get(["ttsVoices", "syncTime", "autoSync", "cookie", "dictionaryType"], function (result, b, c) {
-    console.log(result)
-    console.log(b)
-    console.log(c)
+chrome.storage.local.get(["ttsVoices", "syncTime", "autoSync", "cookie", "dictionaryType"], function (result) {
     if (!result.ttsVoices) {
         initSettings();
     }
@@ -87,28 +84,50 @@ let sync = function (sendResponse, dictionaryType) {
     }
     //同步欧路词典
     else if (dictionaryType == 1) {
-        fetch("https://my.eudic.net/StudyList/WordsDataSource?start=0&length=100000000")
-            .then(res => res.json())
-            .then(({ data }) => {
-                if (data) {
-                    let wordInfos = {};
-                    data.forEach(item => {
-                        wordInfos[item.uuid.toLowerCase()] = {
-                            phonetic: item.phon,
-                            trans: item.exp,
-                            word: item.uuid,
-                            link: item.word,
-                        }
-                    });
-                    syncSuccess(wordInfos, null, sendResponse, dictionaryType);
-                } else {
-                    sendResponse("同步失败，请尝试重新登录");
-                }
-            }).catch(e => {
-                sendResponse("网络错误或服务器出错，请检查网络后再试或重新登录");
-            });
+        syncEudic(sendResponse, dictionaryType);
     }
 };
+
+
+async function syncEudic(sendResponse, dictionaryType) {
+    let start = 0;
+    let wordInfos = {};
+    let hasMoreData = true;
+    let limit = 4000;
+
+    while (hasMoreData) {
+        try {
+            const response = await fetch(`https://my.eudic.net/StudyList/WordsDataSource?start=${start}&length=${limit}`);
+            const result = await response.json();
+
+            if (result.data && result.data.length > 0) {
+                result.data.forEach(item => {
+                    wordInfos[item.uuid.toLowerCase()] = {
+                        phonetic: item.phon,
+                        trans: item.exp,
+                        word: item.uuid,
+                        link: item.word,
+                    };
+                });
+
+                start += limit;
+                await new Promise(resolve => setTimeout(resolve, 500));
+            } else {
+                hasMoreData = false;
+            }
+        } catch (e) {
+            sendResponse("网络错误或服务器出错，请检查网络后再试或重新登录");
+            return;
+        }
+    }
+
+    if (Object.keys(wordInfos).length > 0) {
+        syncSuccess(wordInfos, null, sendResponse, dictionaryType);
+    } else {
+        sendResponse("同步成功，但生词本无内容，若实际有内容，请尝试重新登录");
+    }
+}
+
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     let needResponse = true;
     if (request.type === "tts") {
