@@ -33,8 +33,13 @@ function init() {
                 //console.log("解析总耗时：" + (new Date().getTime() - before) + " ms")
 
                 //在插入节点时修改
-                document.addEventListener("DOMNodeInserted", onNodeInserted, false);
-                chrome.runtime.sendMessage({type: "setStyle"})
+                // Create an observer instance
+                const observer = new MutationObserver(onNodeInserted);
+                // Configuration object for the observer
+                const config = { childList: true, subtree: true };
+                // Start observing a target node (document.body in this case)
+                observer.observe(document.body, config);
+                chrome.runtime.sendMessage({ type: "setStyle" })
             })
 
         }
@@ -64,7 +69,7 @@ function createBubble() {
         .text("✖")
         .click(() => {
             if (window.confirm("确认删除单词？（若已登录云端，云端单词会同时删除）")) {
-                chrome.runtime.sendMessage({type: "delete", wordData: currWordData}, function (msg) {
+                chrome.runtime.sendMessage({ type: "delete", wordData: currWordData }, function (msg) {
                     //取消高亮删除的单词
                     $(`xqdd_highlight_new_word[word='${currWordData.word}']`).attr("class", "xqdd_highlight_disable")
                     if (msg) {
@@ -115,7 +120,7 @@ function showBubble() {
                 .css("top", nodeRect.bottom + 'px')
                 .css("left", Math.max(5, Math.floor((nodeRect.left + nodeRect.right) / 2) - 100) + 'px')
                 .css("display", 'flex')
-            chrome.runtime.sendMessage({type: "tts", word})
+            chrome.runtime.sendMessage({ type: "tts", word })
             showedNode = currNode
         }
     }
@@ -287,7 +292,7 @@ function highlightNode(texts) {
                     // }
                     newNodeChildrens.push(hightlightText(word))
                 }
-                chrome.runtime.sendMessage({type: "count", word})
+                chrome.runtime.sendMessage({ type: "count", word })
             } else {
                 //匹配失败，追加到已处理字符串
                 checkedText += remainTexts.slice(0, currPos + word.length)
@@ -375,27 +380,31 @@ function mygoodfilter(node) {
     return NodeFilter.FILTER_SKIP;
 }
 
+
 /**
  * 节点插入时判断高亮
- * @param event
+ * @param mutationsList
  */
-function onNodeInserted(event) {
-    var inobj = event.target;
-    if (!inobj)
-        return;
-    if ($(inobj).parents(".xqdd_bubble").length > 0) {
-        return
-    }
-    var classattr = null;
-    if (typeof inobj.getAttribute !== 'function') {
-        return;
-    }
-    try {
-        classattr = inobj.getAttribute('class');
-    } catch (e) {
-        return;
-    }
-    if (!classattr || !classattr.startsWith("xqdd")) {
-        highlight(textNodesUnder(inobj))
-    }
+function onNodeInserted(mutationsList) {
+    mutationsList.forEach(mutation => {
+        if (mutation.type === 'childList') {
+            mutation.addedNodes.forEach(node => {
+                var inobj = node;
+                if (!inobj) return;
+                if ($(inobj).parents(".xqdd_bubble").length > 0) return;
+
+                var classattr = null;
+                if (typeof inobj.getAttribute !== 'function') return;
+                try {
+                    classattr = inobj.getAttribute('class');
+                } catch (e) {
+                    return;
+                }
+
+                if (!classattr || !classattr.startsWith("xqdd")) {
+                    highlight(textNodesUnder(inobj));
+                }
+            });
+        }
+    });
 }
